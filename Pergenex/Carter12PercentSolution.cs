@@ -191,6 +191,33 @@ namespace TuringTrader.Pergenex
         }
     }
     #endregion
+
+    #region Original 12% Solution from book
+    public class Leveraged12PercentSolution : Carter12PercentSolution
+    {
+        public override string Name => "Leveraged version of David Allen Carter 12% Solution";
+        protected override HashSet<string> RISK_ON_ASSETS => new HashSet<string>()
+        {
+            //--- equities
+            "UPRO",                 // 1. SPDR S&P 500 ETF Trust
+            "TQQQ",                 // 2. Invesco QQQ Trust
+            "MIDU",                 // 3. SPDR S&P Mid-Cap 400 ETF Trust
+            "UWM",                 // 4. iShares Russel 2000 ETF
+        };
+        protected override HashSet<string> HEDGE_ASSETS => new HashSet<string>()
+        {
+            "TLT",                 // 1. iShares 20+Year Treasury Bond
+            "JNK",                 // 2. iShares 20+ Year Treasury Bond ETF
+        };
+
+        protected override double MOMENTUM(Instrument i)
+        {
+            // 3 month momentum
+            return i.Close[0] / i.Close[63] - 1.0;
+        }
+    }
+    #endregion
+
 }
 
 //==============================================================================
