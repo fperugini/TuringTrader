@@ -2,6 +2,19 @@
 // Project:     TuringTrader, algorithms from books & publications
 // Name:        David Allen Carter 12% Solution
 // Description: Momentum Portfolio
+// 60 % of Portfolio:
+// Once a month, at the close of the last trading day of the month, the strategy determines the top-performing equity ETF listed in Assets,
+// using a simple momentum test.With all four equity funds listed on a comparison chart (along with SHY*), and using a 3 - month lookback,
+// the ETF whose graph line is uppermost on the chart is the outperformer. The strategy buys that fund at the close on the first trading day of the month.
+// Cash Trigger: Should none of the four graph lines be trending above the 0.0% line (or more precisely, the graph line for SHY *) on that last day of the month,
+// this portion of the portfolio goes to cash.
+//
+// 40% of Portfolio:
+// At the same time, the strategy determines the top-performing bond ETF listed in Assets, using the same momentum test.
+// It buys that fund.No cash trigger on the bond side.
+//
+// So, at any given time The 12% Solution holds one equity index ETF (or cash) representing 60% of the portfolio, and one bond ETF comprising the remaining 40% of the portfolio.
+//
 // History:     2021, FP, created
 //------------------------------------------------------------------------------
 // Copyright:   (c) 2021, Pergenex Software LLC
@@ -28,17 +41,14 @@ namespace TuringTrader.Pergenex
             public string nickname;
             public double roc;
         }
-        /// <summary>
-        /// hash set of asset classes
-        /// </summary>
         protected HashSet<Returns> RETURNS { get; set; }
-        protected abstract HashSet<string> ETF_MENU { get; }
-        protected abstract HashSet<string> RISKFREE_MENU { get; }
+        protected double RISKON_WEIGHT = 0.6;
+        protected double HEDGE_WEIGHT = 0.4;
+        protected abstract HashSet<string> RISK_ON_ASSETS { get; }
+        protected abstract HashSet<string> HEDGE_ASSETS { get; }
         protected abstract double MOMENTUM(Instrument i);
         protected virtual int NUM_PICKS { get => 1; }
-        protected virtual OrderType ORDER_TYPE => OrderType.closeThisBar;
         protected virtual string BENCHMARK => Assets.PORTF_60_40;
-        protected virtual string RISK_FREE => "BIL";
         #endregion
 
         #region override public void Run()
@@ -51,10 +61,10 @@ namespace TuringTrader.Pergenex
             EndTime = DateTime.Now.Date - TimeSpan.FromDays(0);
 
             Deposit(Globals.INITIAL_CAPITAL);
-            CommissionPerShare = Globals.COMMISSION; // the book does not deduct commissions
+            CommissionPerShare = Globals.COMMISSION;
 
-            var menu = AddDataSources(ETF_MENU).ToList();
-            var riskfree = AddDataSources(ETF_MENU).ToList();
+            var menu = AddDataSources(RISK_ON_ASSETS).ToList();
+            var riskfree = AddDataSources(HEDGE_ASSETS).ToList();
             var benchmark = AddDataSource(BENCHMARK);
 
             RETURNS = new HashSet<Returns>();
@@ -63,13 +73,6 @@ namespace TuringTrader.Pergenex
 
             foreach (DateTime simTime in SimTimes)
             {
-#if false
-                if (simTime.Month == 4 && simTime.Year == 2021)
-                {
-                    int x = 1;
-                }
-                int day = simTime.Day;
-#endif
                 // calculate momentum w/ algorithm-specific helper function
                 var evaluation = Instruments
                     .ToDictionary(
@@ -88,52 +91,37 @@ namespace TuringTrader.Pergenex
 
                 if (SimTime[0].Month != NextSimTime.Month)
                 {
-                    // rank, and select top instruments
+                    // rank, and select top riskon instrument
                     var topriskon = menu
-                    .Where(i => menu.Contains(i))
                     .Select(ds => ds.Instrument)
                     .OrderByDescending(i => evaluation[i])
                     .Take(NUM_PICKS);
 
-                    // rank, and select top instruments
-                    var topriskfree = menu
-                    .Where(i => riskfree.Contains(i))
+                    // rank, and select top hedge instrument
+                    var topriskfree = riskfree
                     .Select(ds => ds.Instrument)
                     .OrderByDescending(i => evaluation[i])
                     .Take(NUM_PICKS);
 
-                    // Perform absolute momentum test
-                    //var tbil = evaluation.Where(i => i.Key.Nickname == "BIL").First();
-                    //var abs = evaluation.Where(i => i.Key.Nickname == "VBMFX").First();
-                    //bool riskon = (abs.Value - tbil.Value < 0) ? true : false;
-                    //bool riskon = RISKON(1, abs.Value, tbil.Value, 0.0, 0.0);
+                    // create empty structure for instrument weights
+                    Dictionary<Instrument, double> instrumentWeights = menu.Union(riskfree).ToDictionary(ds => ds.Instrument, ds => 0.0);
+                    var riskonmomo = evaluation.Where(i => i.Key.Nickname == topriskon.ElementAt(0).Nickname).First();           
+                    instrumentWeights[topriskon.ElementAt(0)] = (riskonmomo.Value > 0) ? RISKON_WEIGHT : 0.0;
+                    instrumentWeights[topriskfree.ElementAt(0)] = HEDGE_WEIGHT;
 
-                    // calculate target percentage based on risk status (absolute momentum)
-                    double targetEquity = 0.0;
-                    double targetPercentage1 = 0.6;
-                    double targetPercentage2 = 0.4;
-                    double equityPerInstrument1 = NetAssetValue[0] * targetPercentage1;
-                    double equityPerInstrument2 = NetAssetValue[0] * targetPercentage2;
-
-                    foreach (var i in menu.Select(ds => ds.Instrument))
+                    // create orders
+                    foreach (var i in instrumentWeights.Keys)
                     {
-                        // determine current and target shares per instrument...
-                        Alloc.Allocation[i] = topriskon.Contains(i) ? targetPercentage1 : 0.0;
-                        targetEquity = topriskon.Contains(i) ? equityPerInstrument1 : 0.0;
-
-                        int targetShares = (int)Math.Floor(targetEquity / i.Close[0]);
+                        Alloc.Allocation[i] = instrumentWeights[i];
+                        int targetShares = (int)Math.Floor(instrumentWeights[i] * NetAssetValue[0] / i.Close[0]);
                         int currentShares = i.Position;
-                        Order newOrder = i.Trade(targetShares - currentShares, ORDER_TYPE);
+                        Order newOrder = i.Trade(targetShares - currentShares);
 
-                        // add a comment, to make the trading log easier to read
                         if (newOrder != null)
                         {
-                            if (currentShares == 0)
-                                newOrder.Comment = "Open";
-                            else if (targetShares == 0)
-                                newOrder.Comment = "Close";
-                            else
-                                newOrder.Comment = "Rebalance";
+                            if (currentShares == 0) newOrder.Comment = "open";
+                            else if (targetShares == 0) newOrder.Comment = "close";
+                            else newOrder.Comment = "rebalance";
                         }
                     }
 
@@ -141,7 +129,7 @@ namespace TuringTrader.Pergenex
                     if (!IsOptimizing && TradingDays > 0)
                     {
                         _plotter.AddNavAndBenchmark(this, FindInstrument(BENCHMARK));
-                        _plotter.AddStrategyHoldings(this, ETF_MENU.Select(nick => FindInstrument(nick)));
+                        _plotter.AddStrategyHoldings(this, RISK_ON_ASSETS.Union(HEDGE_ASSETS).Select(nick => FindInstrument(nick)));
                         if (Alloc.LastUpdate == SimTime[0])
                             _plotter.AddTargetAllocationRow(Alloc);
 
@@ -179,10 +167,10 @@ namespace TuringTrader.Pergenex
     }
 
     #region Original 12% Solution from book
-    public class Original12PercentSolution : Carter12PercentSolution
+    public class CarterOriginal12PercentSolution : Carter12PercentSolution
     {
         public override string Name => "David Allen Carter 12% Solution";
-        protected override HashSet<string> ETF_MENU => new HashSet<string>()
+        protected override HashSet<string> RISK_ON_ASSETS => new HashSet<string>()
         {
             //--- equities
             "SPY",                 // 1. SPDR S&P 500 ETF Trust
@@ -190,10 +178,10 @@ namespace TuringTrader.Pergenex
             "MDY",                 // 3. SPDR S&P Mid-Cap 400 ETF Trust
             "IWM",                 // 4. iShares Russel 2000 ETF
         };
-        protected override HashSet<string> RISKFREE_MENU => new HashSet<string>()
+        protected override HashSet<string> HEDGE_ASSETS => new HashSet<string>()
         {
-            "TLT",                 // 1. SPDR S&P 500 ETF Trust
-            "JNK",                 // 2. Invesco QQQ Trust
+            "TLT",                 // 1. iShares 20+Year Treasury Bond
+            "JNK",                 // 2. iShares 20+ Year Treasury Bond ETF
         };
 
         protected override double MOMENTUM(Instrument i)

@@ -10,7 +10,7 @@
     <Grid>
         <Button x:Name="RunButton" Content="Run" Margin="0,30,99,0" VerticalAlignment="Top" IsEnabled="False" Click="RunButton_Click" RenderTransformOrigin="0.547,2.8" HorizontalAlignment="Right" Width="75"/>
         <Button x:Name="ReportButton" Content="Report" Margin="0,30,10,0" VerticalAlignment="Top" IsEnabled="False" Click="ReportButton_Click" HorizontalAlignment="Right" Width="75"/>
-        <TextBox x:Name="LogOutput" VerticalScrollBarVisibility="Auto" Margin="10,94,10,23" TextWrapping="Wrap" Text="" TextChanged="LogOutput_TextChanged"/>
+        <TextBox x:Name="LogOutput" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="10,94,10,23" TextWrapping="Wrap" Text="" TextChanged="LogOutput_TextChanged"/>
         <Menu x:Name="MenuBar" Height="23" VerticalAlignment="Top">
             <MenuItem Header="_File">
                 <MenuItem x:Name="AlgoMenu" Header="_Algorithm" ItemsSource="{Binding MenuItems}" Click="MenuAlgorithm_Click">
