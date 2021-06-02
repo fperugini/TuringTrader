@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Pergenex Algorithms</Description>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>TuringTrader.Pergenex</RootNamespace>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy $(TargetPath) ..\Algorithms\$(TargetFileName)" />
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TuringTrader.Simulator\TuringTrader.Simulator.csproj" />
+  </ItemGroup>
+
+</Project>
