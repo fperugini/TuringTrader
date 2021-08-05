@@ -41,7 +41,6 @@ namespace TuringTrader.Pergenex
         protected virtual string ABS_MOMENTUM => "VBMFX";
         protected virtual string RISK_FREE => "BIL";
         #endregion
-
         #region override public void Run()
         public override IEnumerable<Bar> Run(DateTime? startTime, DateTime? endTime)
         {
@@ -178,7 +177,7 @@ namespace TuringTrader.Pergenex
             FitnessValue = this.CalcFitness();
         }
         #endregion
-
+        #region Monthly Performance
         private void addMonthlyPerformance()
         {
             double lastequity = Globals.INITIAL_CAPITAL;
@@ -268,6 +267,7 @@ namespace TuringTrader.Pergenex
                 _plotter.Plot("Total", cagr.ToString("0.00"));
             }
         }
+        #endregion
     }
 
     #region Livy

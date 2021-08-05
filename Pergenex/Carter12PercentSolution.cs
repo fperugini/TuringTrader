@@ -51,7 +51,6 @@ namespace TuringTrader.Pergenex
         protected virtual int NUM_PICKS { get => 1; }
         protected virtual string BENCHMARK => Assets.PORTF_60_40;
         #endregion
-
         #region override public void Run()
         public override IEnumerable<Bar> Run(DateTime? startTime, DateTime? endTime)
         {
@@ -109,7 +108,7 @@ namespace TuringTrader.Pergenex
 
                     // create empty structure for instrument weights
                     Dictionary<Instrument, double> instrumentWeights = menu.Union(riskfree).ToDictionary(ds => ds.Instrument, ds => 0.0);
-                    var riskonmomo = evaluation.Where(i => i.Key.Nickname == topriskon.ElementAt(0).Nickname).First();           
+                    var riskonmomo = evaluation.Where(i => i.Key.Nickname == topriskon.ElementAt(0).Nickname).First();
                     instrumentWeights[topriskon.ElementAt(0)] = (riskonmomo.Value > 0) ? RISKON_WEIGHT : 0.0;
                     instrumentWeights[topriskfree.ElementAt(0)] = HEDGE_WEIGHT;
 
@@ -169,6 +168,7 @@ namespace TuringTrader.Pergenex
             FitnessValue = this.CalcFitness();
         }
         #endregion
+        #region Monthly Performance
         private void addMonthlyPerformance()
         {
             double lastequity = Globals.INITIAL_CAPITAL;
@@ -258,11 +258,11 @@ namespace TuringTrader.Pergenex
                 _plotter.Plot("Total", cagr.ToString("0.00"));
             }
         }
+        #endregion
     }
 
-
-#region Original 12% Solution from book
-public class CarterOriginal12PercentSolution : Carter12PercentSolution
+    #region Original 12% Solution from book
+    public class CarterOriginal12PercentSolution : Carter12PercentSolution
     {
         public override string Name => "David Allen Carter 12% Solution";
         protected override HashSet<string> RISK_ON_ASSETS => new HashSet<string>()
