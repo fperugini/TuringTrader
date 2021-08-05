@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using TuringTrader.Algorithms.Glue;
+using TuringTrader.Indicators;
 using TuringTrader.Simulator;
 #endregion
 
@@ -59,6 +60,9 @@ namespace TuringTrader.Pergenex
             WarmupStartTime = DateTime.Parse("09/01/2007", CultureInfo.InvariantCulture);
             StartTime = DateTime.Parse("01/01/2008", CultureInfo.InvariantCulture);
             EndTime = DateTime.Now.Date - TimeSpan.FromDays(0);
+            //WarmupStartTime = DateTime.Parse("09/01/2019", CultureInfo.InvariantCulture);
+            //StartTime = DateTime.Parse("01/01/2020", CultureInfo.InvariantCulture);
+            //EndTime = DateTime.Now.Date - TimeSpan.FromDays(0);
 
             Deposit(Globals.INITIAL_CAPITAL);
             CommissionPerShare = Globals.COMMISSION;
@@ -151,6 +155,7 @@ namespace TuringTrader.Pergenex
                 _plotter.AddPnLHoldTime(this);
                 _plotter.AddMfeMae(this);
                 _plotter.AddParameters(this);
+                addMonthlyPerformance();
 
                 _plotter.SelectChart("Current Returns", "Name");
                 foreach (var i in RETURNS)
@@ -164,10 +169,100 @@ namespace TuringTrader.Pergenex
             FitnessValue = this.CalcFitness();
         }
         #endregion
+        private void addMonthlyPerformance()
+        {
+            double lastequity = Globals.INITIAL_CAPITAL;
+            double startequity = 0;
+            double cagr = 0;
+
+            _plotter.SelectChart("Monthly Returns", "Year");
+            var series = _plotter.AllData[this.Name];
+            for (int i = 0; i < series.Count; i++)
+            {
+                if (i == series.Count) continue;
+                DateTime dt = (DateTime)series[i]["Date"];
+                _plotter.SetX(dt.Year.ToString());
+                double ret = (double)series[i++][this.Name];
+                double pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Jan", pnl.ToString("0.00"));
+                lastequity = ret;
+                startequity = lastequity;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Feb", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Mar", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Apr", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("May", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Jun", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Jul", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Aug", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Sep", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Oct", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Nov", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Dec", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                cagr = 100 * (Math.Pow((lastequity / startequity), 1) - 1);
+                _plotter.Plot("Total", cagr.ToString("0.00"));
+            }
+        }
     }
 
-    #region Original 12% Solution from book
-    public class CarterOriginal12PercentSolution : Carter12PercentSolution
+
+#region Original 12% Solution from book
+public class CarterOriginal12PercentSolution : Carter12PercentSolution
     {
         public override string Name => "David Allen Carter 12% Solution";
         protected override HashSet<string> RISK_ON_ASSETS => new HashSet<string>()
@@ -192,17 +287,17 @@ namespace TuringTrader.Pergenex
     }
     #endregion
 
-    #region Original 12% Solution from book
+    #region Leveraged version of the 12% Solution
     public class Leveraged12PercentSolution : Carter12PercentSolution
     {
         public override string Name => "Leveraged version of David Allen Carter 12% Solution";
         protected override HashSet<string> RISK_ON_ASSETS => new HashSet<string>()
         {
             //--- equities
-            "UPRO",                 // 1. SPDR S&P 500 ETF Trust
-            "TQQQ",                 // 2. Invesco QQQ Trust
-            "MIDU",                 // 3. SPDR S&P Mid-Cap 400 ETF Trust
-            "UWM",                 // 4. iShares Russel 2000 ETF
+            "UPRO",                 // 1. Leveraged SPY
+            "TQQQ",                 // 2. Leveraged QQQ
+            "MIDU",                 // 3. Leveraged S&P Mid-Cap
+            "UWM",                  // 4. Leveraged Russel 2000
         };
         protected override HashSet<string> HEDGE_ASSETS => new HashSet<string>()
         {

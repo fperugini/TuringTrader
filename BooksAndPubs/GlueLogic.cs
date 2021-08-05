@@ -24,7 +24,7 @@
 // USE_NORGATE_UNIVERSE
 // defined: use survivorship-free universe through Norgate Data
 // undefined: use fixed test univese with hefty survivorship bias
-//#define USE_NORGATE_UNIVERSE
+#define USE_NORGATE_UNIVERSE
 
 #region libraries
 using System;

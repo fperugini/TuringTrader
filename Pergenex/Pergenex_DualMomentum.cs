@@ -164,6 +164,8 @@ namespace TuringTrader.Pergenex
                 _plotter.AddMfeMae(this);
                 _plotter.AddParameters(this);
 
+                addMonthlyPerformance();
+
                 _plotter.SelectChart("Current Returns", "Name");
                 foreach (var i in RETURNS)
                 {
@@ -176,6 +178,96 @@ namespace TuringTrader.Pergenex
             FitnessValue = this.CalcFitness();
         }
         #endregion
+
+        private void addMonthlyPerformance()
+        {
+            double lastequity = Globals.INITIAL_CAPITAL;
+            double startequity = 0;
+            double cagr = 0;
+
+            _plotter.SelectChart("Monthly Returns", "Year");
+            var series = _plotter.AllData[this.Name];
+            for (int i = 0; i < series.Count; i++)
+            {
+                if (i == series.Count) continue;
+                DateTime dt = (DateTime)series[i]["Date"];
+                _plotter.SetX(dt.Year.ToString());
+                double ret = (double)series[i++][this.Name];
+                double pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Jan", pnl.ToString("0.00"));
+                lastequity = ret;
+                startequity = lastequity;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Feb", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Mar", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Apr", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("May", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Jun", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Jul", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Aug", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Sep", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Oct", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i++][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Nov", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                if (i == series.Count) continue;
+                ret = (double)series[i][this.Name];
+                pnl = 100.0 * (ret / lastequity - 1.0);
+                _plotter.Plot("Dec", pnl.ToString("0.00"));
+                lastequity = ret;
+
+                cagr = 100 * (Math.Pow((lastequity / startequity), 1) - 1);
+                _plotter.Plot("Total", cagr.ToString("0.00"));
+            }
+        }
     }
 
     #region Livy
